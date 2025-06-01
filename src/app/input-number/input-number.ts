@@ -177,7 +177,29 @@ export class InputNumber implements OnInit {
 
         } else {
             // курсор зліва від розділювача
-            if (intPart.length >= this.maxLength) return state;
+            if (intPart.length >= this.maxLength) {
+                if (state.cursorIndex === intPart.length) {
+                    if (this.fractional === 0) return state;
+
+                    if (state.value.includes('.')) {
+                        return {
+                            value: intPart + '.' + symbol + fracPart.substring(1),
+                            cursorIndex: state.cursorIndex + 2,
+                        }
+                    } else {
+                        return {
+                            value: state.value + '.' + symbol,
+                            cursorIndex: state.cursorIndex + 2,
+                        }
+                    }
+                }
+                else {
+                    return {
+                        value: state.value.substring(0, state.cursorIndex) + symbol + state.value.substring(state.cursorIndex + 1),
+                        cursorIndex: state.cursorIndex + 1,
+                    };
+                }
+            }
 
             if (intPart === '0' && state.cursorIndex === 1) {
                 return {
@@ -208,6 +230,4 @@ export class InputNumber implements OnInit {
     private isDigit(char: string): boolean {
         return /^\d$/.test(char);
     }
-
-    protected readonly onfocus = onfocus;
 }
