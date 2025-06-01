@@ -186,7 +186,7 @@ export class InputNumber implements OnInit {
                 };
             }
 
-            if (symbol === '0' && state.cursorIndex === 0) {
+            if (symbol === '0' && state.cursorIndex === 0 && state.value.length !== 0) {
                 return state;
             }
 
