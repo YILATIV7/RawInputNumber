@@ -13,12 +13,6 @@ interface RangeCursorInputState extends InputState {
     cursorEnd: number;
 }
 
-/*
-Problems:
-- zeros (000989.23)
-- paste
- */
-
 @Component({
     selector: 'app-input-number',
     imports: [],
@@ -260,6 +254,10 @@ export class InputNumber implements OnInit {
 
         } else {
             // курсор зліва від розділювача
+            if (symbol === '0' && state.cursorIndex === 0 && state.value.length !== 0) {
+                return state;
+            }
+
             if (intPart.length >= this.maxLength) {
                 if (state.cursorIndex === intPart.length) {
                     if (this.fractional === 0) return state;
@@ -289,10 +287,6 @@ export class InputNumber implements OnInit {
                     value: symbol + state.value.substring(1),
                     cursorIndex: state.cursorIndex,
                 };
-            }
-
-            if (symbol === '0' && state.cursorIndex === 0 && state.value.length !== 0) {
-                return state;
             }
 
             return {
