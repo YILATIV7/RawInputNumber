@@ -13,6 +13,7 @@ interface InputState {
 })
 export class InputNumber implements OnInit {
     @Input() fractional: number = 4;
+    @Input() maxLength: number = 8;
 
     @ViewChild('numberInput')
     set dateInputRef(value: ElementRef<HTMLInputElement> | undefined) {
@@ -83,26 +84,30 @@ export class InputNumber implements OnInit {
         const separatorIndex = state.value.indexOf('.');
         const [intPart, fracPart] = state.value.split('.');
 
-        if (state.cursorIndex <= separatorIndex) {
-            // курсор до розділювача
-            return {
-                value: state.value.substring(0, state.cursorIndex) + symbol + state.value.substring(state.cursorIndex),
-                cursorIndex: state.cursorIndex + 1,
-            };
-
-        } else {
+        if (separatorIndex !== -1 && state.cursorIndex > separatorIndex) {
             // курсор після розділювача
-            if (fracPart && fracPart.length < this.fractional) {
+            if (fracPart.length < this.fractional) {
                 return {
                     value: state.value.substring(0, state.cursorIndex) + symbol + state.value.substring(state.cursorIndex),
                     cursorIndex: state.cursorIndex + 1,
                 };
             } else {
+                if (state.cursorIndex === state.value.length) return state;
+
                 return {
                     value: state.value.substring(0, state.cursorIndex) + symbol + state.value.substring(state.cursorIndex + 1),
                     cursorIndex: state.cursorIndex + 1,
                 };
             }
+
+        } else {
+            // курсор до розділювача
+            if (intPart.length >= this.maxLength) return state;
+
+            return {
+                value: state.value.substring(0, state.cursorIndex) + symbol + state.value.substring(state.cursorIndex),
+                cursorIndex: state.cursorIndex + 1,
+            };
         }
     }
 
