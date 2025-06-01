@@ -13,6 +13,11 @@ interface RangeCursorInputState extends InputState {
     cursorEnd: number;
 }
 
+/*
+Непраильно обррбляється длдавання і видалення пробілів, якщо пробіл додався при додаванні символа (також перевірити, чи немає іще стрибків курсора)
+
+ */
+
 @Component({
     selector: 'app-input-number',
     imports: [],
@@ -45,8 +50,8 @@ export class InputNumber implements OnInit {
         if (!this.element) return;
         event.preventDefault();
 
-        const cursorStart = this.element.selectionStart!;
-        const cursorEnd = this.element.selectionEnd!;
+        let cursorStart = this.element.selectionStart!;
+        let cursorEnd = this.element.selectionEnd!;
 
         if (event.inputType === "deleteContentBackward") {
             if (cursorStart === cursorEnd && cursorStart === 0) return;
@@ -82,7 +87,15 @@ export class InputNumber implements OnInit {
         } else if (event.inputType === "deleteContentForward") {
             // do nothing
 
-        } else if (event.inputType === "insertText" && cursorStart === cursorEnd) {
+        } else if (event.inputType === "insertText") {
+            if (cursorStart === 0 && cursorEnd === this.element.value.length) {
+                this.element.value = '';
+                this.element.setSelectionRange(0, 0);
+                cursorStart = 0;
+                cursorEnd = 0;
+            }
+
+            if (cursorStart !== cursorEnd) return;
             if (this.element.value.includes('-') && cursorStart === 0) return;
 
             if (event.data === '-') {
