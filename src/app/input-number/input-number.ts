@@ -2,7 +2,15 @@ import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
 
 interface InputState {
     value: string;
+}
+
+interface CursorInputState extends InputState {
     cursorIndex: number;
+}
+
+interface RangeCursorInputState extends InputState {
+    cursorStart: number;
+    cursorEnd: number;
 }
 
 @Component({
@@ -38,34 +46,64 @@ export class InputNumber implements OnInit {
         const valStr = this.element.value;
 
         if (event.inputType === "deleteContentBackward") {
-            if (cursorStart === cursorEnd) {
-                if (cursorStart > 0) {
-                    this.element.value = this.element.value.substring(0, cursorStart - 1) + this.element.value.substring(cursorStart);
-                    this.element.setSelectionRange(cursorStart - 1, cursorStart - 1);
-                }
-            } else {
-                this.element.value = this.element.value.substring(0, cursorStart) + this.element.value.substring(cursorEnd);
-                this.element.setSelectionRange(cursorStart, cursorStart);
-            }
+            const nextState: CursorInputState = this.processDeleteBackward({
+                value: this.element.value,
+                cursorStart,
+                cursorEnd
+            });
+
+            this.element.value = nextState.value;
+            this.element.setSelectionRange(nextState.cursorIndex, nextState.cursorIndex);
 
         } else if (event.inputType === "deleteContentForward") {
             // do nothing
 
         } else if (event.inputType === "insertText" && cursorStart === cursorEnd) {
-            const prevState: InputState = {
+            const prevState: CursorInputState = {
                 value: this.element.value,
                 cursorIndex: this.element.selectionStart!,
             }
 
             if (event.data && event.data.length === 1) {
-                const resultState: InputState = this.processSymbol(event.data, prevState);
+                const resultState: CursorInputState = this.processSymbol(event.data, prevState);
                 this.element.value = resultState.value;
                 this.element.setSelectionRange(resultState.cursorIndex, resultState.cursorIndex);
             }
         }
     }
 
-    private processSymbol(symbol: string, state: InputState) {
+    private processDeleteBackward(state: RangeCursorInputState): CursorInputState {
+        const separatorIndex = state.value.indexOf('.');
+        const [intPart, fracPart] = state.value.split('.');
+
+        if (state.cursorStart === state.cursorEnd) {
+            if (intPart.length === 1) {
+                return {
+                    value: '0' + state.value.substring(1),
+                    cursorIndex: state.cursorStart
+                };
+            }
+
+            if (state.cursorStart > 0) {
+                return {
+                    value: state.value.substring(0, state.cursorStart - 1) + state.value.substring(state.cursorStart),
+                    cursorIndex: state.cursorStart - 1
+                };
+            }
+
+            return {
+                value: state.value,
+                cursorIndex: state.cursorEnd,
+            };
+        } else {
+            return {
+                value: state.value.substring(0, state.cursorStart) + state.value.substring(state.cursorEnd),
+                cursorIndex: state.cursorStart
+            };
+        }
+    }
+
+    private processSymbol(symbol: string, state: CursorInputState): CursorInputState {
 
         if (this.isSeparator(symbol)) {
             if (!state.value.includes('.') && state.cursorIndex >= state.value.length - this.fractional) {
@@ -112,6 +150,13 @@ export class InputNumber implements OnInit {
         } else {
             // курсор до розділювача
             if (intPart.length >= this.maxLength) return state;
+
+            if (intPart === '0' && state.cursorIndex === 1) {
+                return {
+                    value: symbol + state.value.substring(1),
+                    cursorIndex: state.cursorIndex,
+                };
+            }
 
             return {
                 value: state.value.substring(0, state.cursorIndex) + symbol + state.value.substring(state.cursorIndex),
