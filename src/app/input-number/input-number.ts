@@ -13,6 +13,12 @@ interface RangeCursorInputState extends InputState {
     cursorEnd: number;
 }
 
+/*
+Problems:
+- zeros (000989.23)
+- paste
+ */
+
 @Component({
     selector: 'app-input-number',
     imports: [],
@@ -49,10 +55,25 @@ export class InputNumber implements OnInit {
         const cursorEnd = this.element.selectionEnd!;
 
         if (event.inputType === "deleteContentBackward") {
+            if (cursorStart === cursorEnd && cursorStart === 0) return;
+
+            if (cursorStart === 0 && cursorEnd === this.element.value.length) {
+                this.element.value = '';
+                return;
+            }
+
+            if (cursorStart === cursorEnd && cursorStart === 1 && this.element.value.includes('-')) {
+                this.element.value = this.element.value.substring(1);
+                this.element.setSelectionRange(0, 0);
+                return;
+            }
+
+            const hasMinus = this.element.value.includes('-');
+
             const prevState: RangeCursorInputState = {
-                value: this.element.value,
-                cursorStart,
-                cursorEnd
+                value: this.element.value.replace('-', ''),
+                cursorStart: cursorStart - (hasMinus ? 1 : 0),
+                cursorEnd: cursorEnd - (hasMinus ? 1 : 0)
             };
 
             const nextState: CursorInputState = this.modifySpacesAdd(
@@ -61,16 +82,28 @@ export class InputNumber implements OnInit {
                 )
             );
 
-            this.element.value = nextState.value;
-            this.element.setSelectionRange(nextState.cursorIndex, nextState.cursorIndex);
+            this.element.value = (hasMinus ? '-' : '') + nextState.value;
+            this.element.setSelectionRange(nextState.cursorIndex + (hasMinus ? 1 : 0), nextState.cursorIndex + (hasMinus ? 1 : 0));
 
         } else if (event.inputType === "deleteContentForward") {
             // do nothing
 
         } else if (event.inputType === "insertText" && cursorStart === cursorEnd) {
+            if (this.element.value.includes('-') && cursorStart === 0) return;
+
+            if (event.data === '-') {
+                if (this.allowNegative && cursorStart === 0 && event.data === '-' && !this.element.value.includes('-')) {
+                    this.element.value = '-' + this.element.value;
+                    this.element.setSelectionRange(1, 1);
+                }
+                return;
+            }
+
+            const hasMinus = this.element.value.includes('-');
+
             const prevState: CursorInputState = {
-                value: this.element.value,
-                cursorIndex: this.element.selectionStart!,
+                value: this.element.value.replace('-', ''),
+                cursorIndex: this.element.selectionStart! - (hasMinus ? 1 : 0),
             }
 
             if (event.data && event.data.length === 1) {
@@ -81,8 +114,8 @@ export class InputNumber implements OnInit {
                     )
                 );
 
-                this.element.value = nextState.value;
-                this.element.setSelectionRange(nextState.cursorIndex, nextState.cursorIndex);
+                this.element.value = (hasMinus ? '-' : '') + nextState.value;
+                this.element.setSelectionRange(nextState.cursorIndex + (hasMinus ? 1 : 0), nextState.cursorIndex + (hasMinus ? 1 : 0));
             }
         }
     }
