@@ -39,8 +39,10 @@ export class InputNumber implements OnInit {
 
         if (event.inputType === "deleteContentBackward") {
             if (cursorStart === cursorEnd) {
-                this.element.value = this.element.value.substring(0, cursorStart - 1) + this.element.value.substring(cursorStart);
-                this.element.setSelectionRange(cursorStart - 1, cursorStart - 1);
+                if (cursorStart > 0) {
+                    this.element.value = this.element.value.substring(0, cursorStart - 1) + this.element.value.substring(cursorStart);
+                    this.element.setSelectionRange(cursorStart - 1, cursorStart - 1);
+                }
             } else {
                 this.element.value = this.element.value.substring(0, cursorStart) + this.element.value.substring(cursorEnd);
                 this.element.setSelectionRange(cursorStart, cursorStart);
@@ -66,7 +68,7 @@ export class InputNumber implements OnInit {
     private processSymbol(symbol: string, state: InputState) {
 
         if (this.isSeparator(symbol)) {
-            if (!state.value.includes('.')) {
+            if (!state.value.includes('.') && state.cursorIndex >= state.value.length - this.fractional) {
                 return {
                     value: state.value.substring(0, state.cursorIndex) + '.' + state.value.substring(state.cursorIndex),
                     cursorIndex: state.cursorIndex + 1,
