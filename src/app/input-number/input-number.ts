@@ -25,14 +25,11 @@ export class InputNumber implements OnInit {
     @Input() allowNegative: boolean = true;
 
     @ViewChild('numberInput')
-    set dateInputRef(value: ElementRef<HTMLInputElement> | undefined) {
+    set inputRef(value: ElementRef<HTMLInputElement> | undefined) {
         this.element = value?.nativeElement;
     }
 
     element: HTMLInputElement | undefined;
-
-    constructor() {
-    }
 
     ngOnInit() {
         setTimeout(() => {
@@ -52,11 +49,17 @@ export class InputNumber implements OnInit {
         const cursorEnd = this.element.selectionEnd!;
 
         if (event.inputType === "deleteContentBackward") {
-            const nextState: CursorInputState = this.processDeleteBackward({
+            const prevState: RangeCursorInputState = {
                 value: this.element.value,
                 cursorStart,
                 cursorEnd
-            });
+            };
+
+            const nextState: CursorInputState = this.modifySpacesAdd(
+                this.processDeleteBackward(
+                    this.modifySpacesRemove(prevState)
+                )
+            );
 
             this.element.value = nextState.value;
             this.element.setSelectionRange(nextState.cursorIndex, nextState.cursorIndex);
@@ -71,11 +74,58 @@ export class InputNumber implements OnInit {
             }
 
             if (event.data && event.data.length === 1) {
-                const resultState: CursorInputState = this.processSymbol(event.data, prevState);
-                this.element.value = resultState.value;
-                this.element.setSelectionRange(resultState.cursorIndex, resultState.cursorIndex);
+                const nextState: CursorInputState = this.modifySpacesAdd(
+                    this.processSymbol(
+                        event.data,
+                        this.modifySpacesRemove(prevState)
+                    )
+                );
+
+                this.element.value = nextState.value;
+                this.element.setSelectionRange(nextState.cursorIndex, nextState.cursorIndex);
             }
         }
+    }
+
+    private modifySpacesRemove(state: any): any {
+        let cleanedValue = '';
+        let removedBeforeStart = 0;
+        let removedBeforeEnd = 0;
+
+        for (let i = 0; i < state.value.length; i++) {
+            const char = state.value[i];
+            const isSpace = char === ' ';
+
+            if ((state.cursorStart && i < state.cursorStart || state.cursorIndex && i < state.cursorIndex) && isSpace) removedBeforeStart++;
+            if (i < state.cursorEnd && isSpace) removedBeforeEnd++;
+
+            if (!isSpace) cleanedValue += char;
+        }
+
+        return {
+            value: cleanedValue,
+            cursorStart: state.cursorStart - removedBeforeStart,
+            cursorEnd: state.cursorEnd - removedBeforeEnd,
+            cursorIndex: state.cursorIndex - removedBeforeStart
+        };
+    }
+
+    private modifySpacesAdd(state: CursorInputState): CursorInputState {
+        const [intPart, fracPart] = state.value.split('.');
+        const cursorInInt = Math.min(state.cursorIndex, intPart.length);
+
+        const intBeforeCursor = intPart.slice(0, cursorInInt);
+        const formattedBeforeCursor = intBeforeCursor.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        const spaceCount = formattedBeforeCursor.length - intBeforeCursor.length;
+
+        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        const newValue = fracPart !== undefined ? `${formattedInt}.${fracPart}` : formattedInt;
+        const newCursor = state.cursorIndex + spaceCount;
+
+        return {
+            value: newValue,
+            cursorIndex: newValue[newCursor - 1] === ' ' ? newCursor + 1 : newCursor
+        };
     }
 
     processDeleteBackward(state: RangeCursorInputState): CursorInputState {
