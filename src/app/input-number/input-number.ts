@@ -69,10 +69,17 @@ export class InputNumber implements OnInit {
 
         if (this.isSeparator(symbol)) {
             if (!state.value.includes('.') && state.cursorIndex >= state.value.length - this.fractional) {
-                return {
-                    value: state.value.substring(0, state.cursorIndex) + '.' + state.value.substring(state.cursorIndex),
-                    cursorIndex: state.cursorIndex + 1,
-                };
+                if (state.cursorIndex === 0) {
+                    return {
+                        value: '0.' + state.value,
+                        cursorIndex: 2,
+                    };
+                } else {
+                    return {
+                        value: state.value.substring(0, state.cursorIndex) + '.' + state.value.substring(state.cursorIndex),
+                        cursorIndex: state.cursorIndex + 1,
+                    };
+                }
             }
             return state;
         }
