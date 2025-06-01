@@ -1,4 +1,4 @@
-<input [value]="value"
-       (beforeinput)="proceedInput($event)"
+<input #numberInput
+       (beforeinput)="onBeforeInput($event)"
        style="text-align: right"
 />
