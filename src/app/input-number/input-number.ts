@@ -168,7 +168,7 @@ export class InputNumber implements OnInit {
         };
     }
 
-    processDeleteBackward(state: RangeCursorInputState): CursorInputState {
+    private processDeleteBackward(state: RangeCursorInputState): CursorInputState {
         const separatorIndex = state.value.indexOf('.');
         const [intPart, fracPart] = state.value.split('.');
 
@@ -213,7 +213,7 @@ export class InputNumber implements OnInit {
         }
     }
 
-    processSymbol(symbol: string, state: CursorInputState): CursorInputState {
+    private processSymbol(symbol: string, state: CursorInputState): CursorInputState {
 
         if (this.isSeparator(symbol)) {
             if (state.value.indexOf('.') === state.cursorIndex) {

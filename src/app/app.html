@@ -1,5 +1,42 @@
-<app-input-number
-    [maxLength]="8"
-    [fractional]="4"
-    [allowNegative]="true"
-/>
+
+<!--<div style="width: 300px; height: 50px; display:flex; flex-direction: row">-->
+<!--    <input style="background: mediumvioletred; width: 150px" (click)="console.log('Click on input')"/>-->
+<!--    <button style="background: forestgreen; width: 150px" (click)="console.log('Click on btn')"></button>-->
+<!--</div>-->
+
+<div class="fieldControls">
+    <div class="fieldData"
+         cdkOverlayOrigin
+         #trigger="cdkOverlayOrigin">
+
+        <input #dateInput
+               draggable="false"
+               ondragstart="return false"
+
+               class="date-input"
+               (click)="onClick($event)"
+        />
+    </div>
+    <ng-template
+            (backdropClick)="isOpen = false"
+            [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+            [cdkConnectedOverlayFlexibleDimensions]="true"
+            [cdkConnectedOverlayHasBackdrop]="true"
+            [cdkConnectedOverlayOpen]="isOpen"
+            [cdkConnectedOverlayOrigin]="trigger"
+            [cdkConnectedOverlayPush]="true"
+            cdkConnectedOverlay>
+
+        <div>Hello! Hi</div>
+    </ng-template>
+
+    <div class="fieldActions">
+        <button (click)="$event.stopPropagation(); clear()" type="button">
+            <div style="background: red; width: 20px; height: 20px"></div>
+        </button>
+        <button (click)="isOpen = !isOpen" type="button">
+            <div style="background: gray; width: 20px; height: 20px"></div>
+        </button>
+    </div>
+</div>
+
