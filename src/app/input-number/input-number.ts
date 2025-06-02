@@ -13,11 +13,6 @@ interface RangeCursorInputState extends InputState {
     cursorEnd: number;
 }
 
-/*
-Непраильно обррбляється длдавання і видалення пробілів, якщо пробіл додався при додаванні символа (також перевірити, чи немає іще стрибків курсора)
-
- */
-
 @Component({
     selector: 'app-input-number',
     imports: [],
@@ -152,19 +147,24 @@ export class InputNumber implements OnInit {
 
     private modifySpacesAdd(state: CursorInputState): CursorInputState {
         const [intPart, fracPart] = state.value.split('.');
-        const cursorInInt = Math.min(state.cursorIndex, intPart.length);
 
-        const intBeforeCursor = intPart.slice(0, cursorInInt);
-        const formattedBeforeCursor = intBeforeCursor.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        const spaceCount = formattedBeforeCursor.length - intBeforeCursor.length;
+        let formattedInt = '';
+        let cursorIndexDelta = 0;
 
-        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        const newValue = fracPart !== undefined ? `${formattedInt}.${fracPart}` : formattedInt;
-        const newCursor = state.cursorIndex + spaceCount;
+        const startIndex = (intPart.length + 2) % 3;
+        for (let i = 0; i < intPart.length; i++) {
+            formattedInt += intPart.charAt(i);
+            if ((i - startIndex) % 3 === 0 && i !== intPart.length - 1) {
+                formattedInt += ' ';
+                if (state.cursorIndex > i + 1) {
+                    cursorIndexDelta += 1;
+                }
+            }
+        }
 
         return {
-            value: newValue,
-            cursorIndex: newValue[newCursor - 1] === ' ' ? newCursor + 1 : newCursor
+            value: fracPart !== undefined ? `${formattedInt}.${fracPart}` : formattedInt,
+            cursorIndex: state.cursorIndex + cursorIndexDelta
         };
     }
 
@@ -237,11 +237,6 @@ export class InputNumber implements OnInit {
                 }
             }
             return state;
-        }
-
-        if (symbol === '-') {
-            if (!this.allowNegative) return state;
-            // else do minus
         }
 
         if (!this.isDigit(symbol)) return state;
