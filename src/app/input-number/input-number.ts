@@ -190,7 +190,7 @@ export class InputNumber implements OnInit {
             if (state.cursorStart === 1) {
                 return {
                     value: this.removePrefixZeros(state.value.substring(1)),
-                    cursorIndex: 1
+                    cursorIndex: 0
                 };
             }
 
